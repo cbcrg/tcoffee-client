@@ -1,0 +1,25 @@
+#!/bin/sh
+#
+# Define the application home if not exists 
+#
+if [ -z $CLOUDCOFFEE_HOME ]; then 
+export CLOUDCOFFEE_HOME=`dirname $0`
+fi
+
+#
+# Define the application libray 
+#
+export CLOUDCOFFEE_LIB=$CLOUDCOFFEE_HOME/c-coffee.jar 
+
+#
+# Check if exists an unpgrade and use it 
+#
+if [ -e $CLOUDCOFFEE_LIB.new ]; then 
+  rm -rf $CLOUDCOFFEE_LIB
+  mv $CLOUDCOFFEE_LIB.new $CLOUDCOFFEE_LIB
+fi 
+
+#
+# Run the client 
+#
+exec java -jar $CLOUDCOFFEE_LIB $@
