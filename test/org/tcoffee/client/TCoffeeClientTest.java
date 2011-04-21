@@ -254,7 +254,7 @@ public class TCoffeeClientTest {
 		result.items.add(item1);
 		result.items.add(item2);
 		
-		client.downloadResultFiles(result);
+		client.downloadResultItems(result);
 		
 		assertTrue( FILE1.exists() );	
 		assertEquals( "alpha", IO.readContentAsString(FILE1).trim() );
