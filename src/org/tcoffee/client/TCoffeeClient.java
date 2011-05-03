@@ -41,6 +41,8 @@ public class TCoffeeClient {
 	/* the downloaded result file */
 	private File resultLogFile;
 	
+	private boolean useFlatPath = true;
+	
 	/* wrap the http connection client */
 	Http http;
 	
@@ -73,12 +75,12 @@ public class TCoffeeClient {
 		this.http = new Http();
 	}
 	
-	String urlFor( String verb, KeyValue... params ) { 
+	String urlFor( String action, KeyValue... params ) { 
 		StringBuilder url = new StringBuilder();
 		url.append("http://") .append(host) .append("/api/") .append(bundle) .append("/");
 		
-		if( verb != null ) { 
-			url.append(verb);
+		if( action != null ) { 
+			url.append(action);
 		}
 		
 		if( params != null && params.length>0 ) { 
@@ -165,6 +167,63 @@ public class TCoffeeClient {
 			throw new ClientException(e, "Error on submitting the following command: '%s'", cmdline);
 		}
 	}
+	
+
+	/**
+	 * Invoke the specified program using the 
+	 * @param program to run 
+	 * @param params the parameters to use for the specified program 
+	 * @param files the files to upload
+	 * 
+	 */
+	public void runProgram(String program, List<KeyValue> params ) {
+
+		try { 
+			/*
+			 * 1. get the url 
+			 */
+			String url = urlFor("submit", new KeyValue("name", program));
+			
+			/*
+			 * 2. submit the request and get the result status 
+			 */
+			Sys.print("Sending request...");
+			this.submit = submitAlignment(url, params);
+			Sys.print("\rRequest acquired with ID: %s\n", submit.requestId);
+		
+			/* 
+			 * 3. wait for the result
+			 */
+			Sys.print("Waiting result...");
+			this.result = waitForResult(submit.requestId);
+			Sys.print("\r");
+			
+			/*
+			 * 4. download result
+			 */
+			Sys.print("Downloading result...");
+			downloadResultItems(result);
+			Sys.print("\r");		
+			
+			Sys.println("Result files have been downloaded in the current folder.");
+		
+			if( getRequestUrl() != null ) { 
+				Sys.println("\nYou can share this result using the following link %s", getRequestUrl());
+			}
+	
+		
+		}
+		catch( ServerResponseException e ) { 
+			Sys.error(e);
+		}
+		catch( ClientException e ) { 
+			throw e;
+		}
+		catch( Exception e ) { 
+			throw new ClientException(e, "Error executing program: '%s'", program);
+		}
+		
+	}	
 
 	/**
 	 * @return the command result log text content 
@@ -282,12 +341,18 @@ public class TCoffeeClient {
 				continue;
 			}
 			
-			String path = item.webpath;
-			String uri = base + path;
+			String uri = base + item.webpath;
+
+			File path = new File(item.name);
+			String sName = useFlatPath ? path.getName() : path.toString();
 			File target = outpath != null
-						? new File(outpath, item.name) 
-						: new File(item.name);
-			
+						? new File(outpath, sName) 
+						: new File(sName);
+
+			File parent = target.getAbsoluteFile().getParentFile();
+			if( parent != null && !parent.exists() && !parent.mkdirs() ) { 
+				throw new ClientException("Cannot create target path: '%s'", parent);
+			}
 			http.getFile( uri, target );
 			
 			/* detect the T-coffee log file */
@@ -297,13 +362,39 @@ public class TCoffeeClient {
 		}
 	}
 	
+	public void downloadFiles(String requestId ) {
 
+		result = getResultFor(requestId);
+		if( result.isStatusRUNNING() ) { 
+			Sys.println("Request # %s is still running, cannot download result.", requestId);
+		}
+		
+		downloadResultItems(result);
+		Sys.print("Done");
+		
+	}
+
+
+	
 	/**
 	 * Return the list of available services 
 	 * @return
 	 */
 	public List<ServiceData> getServices() {
 		return getData( urlFor("services") ).services;
+	}
+	
+	public void printServices() { 
+		List<ServiceData> list = getServices();
+		if( list.size() == 0 ) { 
+			Sys.println("(no services available)");
+			return;
+		}
+		
+		Sys.println("List of services available:");
+		for( ServiceData program : list ) { 
+			Sys.println(" - %s: %s", program.name, program.description );
+		}
 	}
 	
 	public void ping() { 
@@ -383,6 +474,10 @@ public class TCoffeeClient {
 		}
 		this.outpath = file;
 	}
+	
+	public void setUseFlatPath( boolean flat ) { 
+		this.useFlatPath = flat;
+	}
 
 	/**
 	 * The URL on the T-coffee web site showing the information about the submitted job 
@@ -401,4 +496,7 @@ public class TCoffeeClient {
 	public ResultData getResult() { 
 		return this.result;
 	}
+
+
+
 }

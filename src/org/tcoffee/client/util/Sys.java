@@ -14,17 +14,17 @@ public class Sys {
 	/**
 	 * The application name to be printed 
 	 */
-	static public final String appname = "Cloud-Coffee Client";
+	static public String appname = "Cloud-Coffee Client";
 
 	/**
 	 * The application binary name to be printed on the command line 
 	 */
-	static public final String appbin = "c-coffee";
+	static public String appbin = "c-coffee";
 	
 	/** 
 	 * The application version 
 	 */
-	static public final Version appver = new Version("1.0.2");
+	static public Version appver = new Version("1.0.2");
 	
 	static public boolean debug;
 	
