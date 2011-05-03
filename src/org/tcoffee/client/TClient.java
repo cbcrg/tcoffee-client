@@ -135,9 +135,13 @@ public class TClient extends AbstractClient {
 			/* 
 			 * invoke the program requested
 			 */
-			client.runProgram( cmd.getOption("program"), params );
-
-			System.exit(0);
+			try { 
+				client.runProgram( cmd.getOption("program"), params );
+				System.exit(0);
+			}
+			catch( Exception e ) { 
+				Sys.error(e);
+			}
 		}
 		
 		if( cmd.hasOption("download") ) { 
