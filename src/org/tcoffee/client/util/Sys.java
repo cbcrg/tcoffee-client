@@ -24,7 +24,7 @@ public class Sys {
 	/** 
 	 * The application version 
 	 */
-	static public Version appver = new Version("1.0.2");
+	static public Version appver = new Version("1.1");
 	
 	static public boolean debug;
 	
