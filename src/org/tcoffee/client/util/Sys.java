@@ -88,8 +88,10 @@ public class Sys {
 			e.printStackTrace(System.out);
 		}
 	}
-	
 
-	
-	
+	public static void exit(String message, Object ... args) {
+		println(message,args);
+		System.exit(0);
+	}
+		
 }

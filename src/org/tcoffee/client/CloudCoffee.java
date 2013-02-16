@@ -37,12 +37,16 @@ public class CloudCoffee extends AbstractClient {
 		cmd.addOption("debug", "Run showing debug informations");
 		cmd.addOption("ping", "Ping the server to verify service integrity");
 		cmd.addOption("out-path", "The path where to save the output files");
+		cmd.addOption("flat-path", "Do not create subfolder for the server returned files","true|false","true",true);
 		cmd.addOption("poll-timeout", "Max time to wait for the request completion (seconds)", "n", "1h", false);
 		cmd.addOption("poll-sleep", "Time to sleep between each poll requests", "n", "5s", false);
 		cmd.addOption("help", "Print this help");
 		cmd.addOption("update-client", "Update the client and exit");
 		cmd.addOption("ver", "Print the client version number");
-
+		cmd.addOption("download", "Download the output files for the specified job ID");
+		cmd.addOption("include-input","Include the input file(s) in the download action");
+		cmd.addOption("async", "Submit the request and exit without waiting for the result");
+		
 		/*
 		 * parse the command line 
 		 */
@@ -85,7 +89,7 @@ public class CloudCoffee extends AbstractClient {
 		 * print the help and exit 
 		 */
 		Sys.print("%s - rel %s\n", Sys.appname, Sys.appver);
-		if( cmd.isEmpty() || cmd.hasOption("help") || cmd.getArguments().isEmpty() ) { 
+		if( cmd.hasOption("help") || (cmd.isEmpty() &&  cmd.getArguments().isEmpty()) ) { 
 			Sys.println(cmd.usage());
 			System.exit(0);
 		}
@@ -109,28 +113,43 @@ public class CloudCoffee extends AbstractClient {
 				System.exit(0);
 			}
 			
+			/* 
+			 * check for download command 
+			 */
+			if( cmd.hasOption("download") ) { 
+				String commaSeparatedIDs = cmd.getOption("download");
+				downloadAllFiles(client, commaSeparatedIDs);
+				Sys.exit("Done");
+ 			}
 			
 			/*
 			 * submit a generic request 
 			 */
 			client.run(cmd.getArgumentsString(), ((CommandLineWithFiles)cmd).getArgumentsFiles());
 			
+			if( client.getAsync() ) { 
+				Sys.print("\nYou can check your request status using the following link %s\n", client.getRequestUrl());
+			}
+
 			/* 
 			 * display the result as returned by T-Coffee
 			 */
-			ResultData result = client.getResult();
-			if( result != null && result.isStatusDONE() ) { 
-				Sys.print("\r%s", client.getResultLog());
-			}
 			else { 
-				Sys.error("Your request terminated with errors. For more information check the file '_tcoffee.err.log'.");
-			}
-			
-			/* 
-			 * show the link to the result page
-			 */
-			if( client.getRequestUrl() != null ) { 
-				Sys.print("\nYou can share this result using the following link %s\n", client.getRequestUrl());
+				ResultData result = client.getResult();
+				if( result != null && result.isStatusDONE() ) { 
+					Sys.print("\r%s", client.getResultLog());
+				}
+				else { 
+					Sys.error("Your request terminated with errors. For more information check the file '_tcoffee.err.log'.");
+				}
+
+				/* 
+				 * show the link to the result page
+				 */
+				if( client.getRequestUrl() != null ) { 
+					Sys.print("\nYou can share this result using the following link %s\n", client.getRequestUrl());
+				}
+				
 			}
 			
 		}
@@ -146,6 +165,42 @@ public class CloudCoffee extends AbstractClient {
  	}
 	
 
+
+
+	private void downloadAllFiles(TCoffeeClient client, String commaSeparatedIDs) {
+
+		String[] IDs = commaSeparatedIDs.split(",");
+		if( IDs == null || IDs.length==0 ) { 
+			Sys.error("You have to provide the request ID for which download the result");
+		}
+		
+		if( IDs.length == 1 ) { 
+			Sys.println("Downloading files for request # %s ", IDs[0]);
+			client.downloadFiles(IDs[0]);
+			return;
+		}
+		
+		File root = client.getOutputPath();
+		
+		for( String id : IDs ) { 
+			Sys.println("Downloading files for request # %s ", id);
+
+			File out = root != null ? new File(root, id) : new File(id) ;
+			client .setOutputPath(out);
+			client .downloadFiles(id);
+			
+			/* 
+			 * just wait few secs
+			 */
+			try { 
+				Thread.sleep( client.getPollSleepSecs() * 100 );
+			}
+			catch ( Exception e ) { 
+				Sys.debug(e);
+			}
+		}
+
+	}
 
 
 	/**

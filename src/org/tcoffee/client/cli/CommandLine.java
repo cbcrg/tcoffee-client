@@ -227,7 +227,7 @@ public class CommandLine {
 		}
 		
 		result.append("Arguments:\n" +
-				"  You can (almost) any T-Coffee argument. \n" +
+				"  You can (almost) use any T-Coffee argument. \n" +
 				"  Note: file names must be prepended by the 'file:' prefix (w/o quote)\n");
 
 		result 

@@ -146,6 +146,7 @@ public class TClient extends AbstractClient {
 		
 		if( cmd.hasOption("download") ) { 
 			client.downloadFiles( cmd.getOption("download") );
+			Sys.print("Done");
 		}
 		
 		

@@ -32,6 +32,10 @@ abstract class AbstractClient {
 	private String fOutPath;
 
 	private Boolean fFlatPath;
+
+	private Boolean fIncludeInputDownload;
+
+	private Boolean fAsync;
 	
 	
 	/*
@@ -57,8 +61,12 @@ abstract class AbstractClient {
 			result = opt.defValue;
 		}
 		
-		if( opt.required && StringUtils.isEmpty(result) ) { 
+		if( opt != null && opt.required && StringUtils.isEmpty(result) ) { 
 			throw new ClientException("Configuration property '%s' is missing. Try to enter a value on the command line.", name);
+		}
+		
+		if( opt == null ) { 
+			Sys.debug("Missing definition for cmd param '%s'", name);
 		}
 		
 		return result;
@@ -203,7 +211,8 @@ abstract class AbstractClient {
 		fPollSleep = paramAsDuration("poll-sleep");
 		fOutPath = param("out-path");
 		fFlatPath = paramAsBool("flat-path");
-
+		fIncludeInputDownload = cmd.hasOption("include-input");
+		fAsync = cmd.hasOption("async");
 	}
 
 	
@@ -227,6 +236,15 @@ abstract class AbstractClient {
 		if( fFlatPath != null ) { 
 			client.setUseFlatPath(fFlatPath);
 		}
+		
+		if( fIncludeInputDownload != null ) { 
+			client.setIncludeInpoutDownload(fIncludeInputDownload);
+		}
+		
+		if( fAsync != null ) { 
+			client.setAsync(fAsync);
+		}
+		
 		return client;
 	}	
 

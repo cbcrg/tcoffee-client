@@ -61,6 +61,10 @@ public class TCoffeeClient {
 	private SubmitData submit;
 
 	private ResultData result;
+
+	private boolean includeInputDownload;
+	
+	private boolean async;
 	
 	
 	/**
@@ -144,6 +148,10 @@ public class TCoffeeClient {
 			Sys.print("Sending request...");
 			this.submit = submitAlignment(uri, params);
 			Sys.print("\rRequest acquired with ID: %s\n", submit.requestId);
+			
+			if( async ) { 
+				return;
+			}
 			
 			/* 
 			 * 3. wait for the result
@@ -336,7 +344,7 @@ public class TCoffeeClient {
 		base = "http://" + base;
 		
 		for( ResultItemData item : result.items ) { 
-			if( "input_file".equals(item.type) ) { 
+			if( "input_file".equals(item.type) && !includeInputDownload ) { 
 				// do not download the input file(s)
 				continue;
 			}
@@ -362,7 +370,7 @@ public class TCoffeeClient {
 		}
 	}
 	
-	public void downloadFiles(String requestId ) {
+	public void downloadFiles( String requestId ) {
 
 		result = getResultFor(requestId);
 		if( result.isStatusRUNNING() ) { 
@@ -370,12 +378,9 @@ public class TCoffeeClient {
 		}
 		
 		downloadResultItems(result);
-		Sys.print("Done");
 		
 	}
 
-
-	
 	/**
 	 * Return the list of available services 
 	 * @return
@@ -447,6 +452,10 @@ public class TCoffeeClient {
 	public void setPollSleepSecs(int pollDelaySecs) {
 		this.pollSleepSecs = pollDelaySecs;
 	}
+	
+	public int getPollSleepSecs() { 
+		return pollSleepSecs;
+	}
 
 	/**
 	 * Setter for polling timeout 
@@ -455,6 +464,10 @@ public class TCoffeeClient {
 	 */
 	public void setPollTimeoutSecs(int pollTimeoutSecs) {
 		this.pollTimeoutSecs = pollTimeoutSecs;
+	}
+	
+	public int getPollTimeoutSecs() { 
+		return pollTimeoutSecs;
 	}
 	
 	/**
@@ -473,6 +486,10 @@ public class TCoffeeClient {
  			
 		}
 		this.outpath = file;
+	}
+	
+	public File getOutputPath() { 
+		return this.outpath;
 	}
 	
 	public void setUseFlatPath( boolean flat ) { 
@@ -497,6 +514,16 @@ public class TCoffeeClient {
 		return this.result;
 	}
 
+	public void setIncludeInpoutDownload(boolean fIncludeInputDownload) {
+		this.includeInputDownload = fIncludeInputDownload;
+	}
 
+	public boolean getAsync() { 
+		return async;
+	}
+	
+	public void setAsync( boolean value ) { 
+		this.async = value;
+	}
 
 }
