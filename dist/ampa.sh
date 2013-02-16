@@ -1,0 +1,1 @@
+java -jar ./t-client.jar --bundle=ampa --program=ampa protein=file:sample.fa window=7 threshold=0.225
